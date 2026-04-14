@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { GoogleGenerativeAI } = require('@google/generative-ai');
+const { GoogleGenAI } = require('@google/genai');
 const { protect, authorize } = require('../middleware/auth');
 
 // Import Models
@@ -196,9 +196,6 @@ router.post('/smart-search', protect, async (req, res) => {
             return res.status(500).json({ message: 'Gemini API key is not configured on the server.' });
         }
 
-        const genAI = new GoogleGenerativeAI(apiKey);
-        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-
         const prompt = `You are a highly intelligent police records analyst AI. 
         You have access to the following partial database dump:
         ${JSON.stringify(contextData)}
@@ -210,11 +207,13 @@ router.post('/smart-search', protect, async (req, res) => {
         If the answer is not in the context, clearly state that you don't have records matching the query.
         Keep the response concise, professional, and formatted in short paragraphs or bullet points where suitable.`;
 
-        const result = await model.generateContent(prompt);
-        const response = result.response;
-        const text = response.text();
+        const ai = new GoogleGenAI({ apiKey });
+        const response = await ai.models.generateContent({
+            model: "gemini-3-flash-preview",
+            contents: prompt
+        });
 
-        res.json({ result: text });
+        res.json({ result: response.text });
     } catch (err) {
         console.error('Gemini Search Error:', err.message);
         res.status(500).json({ message: 'Error processing smart query. ' + err.message });
@@ -252,12 +251,8 @@ router.post('/ai/investigator', protect, authorize('citizen'), async (req, res) 
         Set status to "INCOMPLETE" and leave extractedData fields blank or partially empty if you don't have all 4 pieces of information confidently.
         Once the user has provided all necessary details, set status to "COMPLETE" and fill out the extractedData object fully with the finalized information, and set "reply" to a final thank you message.`;
 
-        const model = genAI.getGenerativeModel({ 
-            model: "gemini-1.5-flash",
-            generationConfig: { responseMimeType: "application/json" }
-        });
+        const ai = new GoogleGenAI({ apiKey });
 
-        // Format history for Gemini chat format
         let chatHistory = [];
         if (history && history.length > 0) {
             chatHistory = history.map(h => ({
@@ -266,17 +261,17 @@ router.post('/ai/investigator', protect, authorize('citizen'), async (req, res) 
             }));
         }
 
-        const chat = model.startChat({
-            history: chatHistory
+        const chat = ai.chats.create({
+            model: "gemini-3-flash-preview",
+            history: chatHistory,
+            config: {
+                systemInstruction: systemPrompt,
+                responseMimeType: "application/json"
+            }
         });
-        
-        let finalMessage = message;
-        if (chatHistory.length === 0) {
-            finalMessage = systemPrompt + "\n\nUser Message: " + message;
-        }
 
-        const result = await chat.sendMessage(finalMessage);
-        let rawText = result.response.text();
+        const response = await chat.sendMessage({ message });
+        let rawText = response.text;
         
         // Remove markdown tags if Gemini wraps the JSON output
         if (rawText.startsWith('```json')) {
@@ -307,9 +302,6 @@ router.get('/ai/analyze-complaint/:id', protect, authorize('admin', 'officer'), 
         const apiKey = process.env.GEMINI_API_KEY;
         if (!apiKey) return res.status(500).json({ message: 'Gemini API not configured' });
 
-        const genAI = new GoogleGenerativeAI(apiKey);
-        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-
         const prompt = `You are a highly intelligent Police Data Analyst AI.
         A citizen just filed the following complaint:
         Subject: ${complaint.subject}
@@ -328,8 +320,13 @@ router.get('/ai/analyze-complaint/:id', protect, authorize('admin', 'officer'), 
         
         Write a concise, high-level intelligence report (max 2-3 short paragraphs). Bold the names of any matched criminals or case IDs. If there are no matches, state that no immediate patterns were found.`;
 
-        const result = await model.generateContent(prompt);
-        res.json({ insights: result.response.text() });
+        const ai = new GoogleGenAI({ apiKey });
+        const response = await ai.models.generateContent({
+            model: "gemini-3-flash-preview",
+            contents: prompt
+        });
+
+        res.json({ insights: response.text });
     } catch (err) {
         console.error('AI Analyze Error:', err);
         res.status(500).json({ message: 'AI Analysis Failed: ' + err.message });
