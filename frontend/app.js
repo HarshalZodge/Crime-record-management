@@ -88,6 +88,22 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    const addCriminalForm = document.getElementById('add-criminal-form');
+    if (addCriminalForm) {
+        addCriminalForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            await createCriminal();
+        });
+    }
+
+    const addUserForm = document.getElementById('add-user-form');
+    if (addUserForm) {
+        addUserForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            await createUser();
+        });
+    }
+
     const searchInput = document.getElementById('search-input-box');
     if (searchInput) {
         searchInput.addEventListener('keydown', async (e) => {
@@ -254,6 +270,60 @@ async function createCase() {
             alert('Error adding case: ' + err.message);
         }
     } catch (err) { console.error('Failed to create case', err); }
+}
+
+async function createCriminal() {
+    const data = {
+        criminalId: document.getElementById('crimIdIn').value,
+        name:       document.getElementById('crimNameIn').value,
+        status:     document.getElementById('crimStatusIn').value,
+        crimes:     document.getElementById('crimCrimesIn').value
+    };
+    try {
+        const res = await fetch(API_BASE + '/api/criminals', {
+            method: 'POST',
+            headers: authHeaders(),
+            body: JSON.stringify(data)
+        });
+        if (res.status === 401) { handle401(); return; }
+        if (res.ok) {
+            document.getElementById('modal-add-criminal').classList.remove('show');
+            document.getElementById('add-criminal-form').reset();
+            fetchCriminals();
+            fetchStats();
+        } else {
+            const err = await res.json();
+            alert('Error adding criminal: ' + err.message);
+        }
+    } catch (err) { console.error('Failed to create criminal', err); }
+}
+
+async function createUser() {
+    const data = {
+        name:     document.getElementById('userNameIn').value,
+        username: document.getElementById('userUsernameIn').value,
+        email:    document.getElementById('userEmailIn').value,
+        password: document.getElementById('userPassIn').value,
+        role:     document.getElementById('userRoleIn').value,
+        rank:     document.getElementById('userRankIn').value,
+        badge:    document.getElementById('userBadgeIn').value
+    };
+    try {
+        const res = await fetch(API_BASE + '/api/auth/register', {
+            method: 'POST',
+            headers: authHeaders(),
+            body: JSON.stringify(data)
+        });
+        if (res.status === 401) { handle401(); return; }
+        if (res.ok) {
+            document.getElementById('modal-add-user').classList.remove('show');
+            document.getElementById('add-user-form').reset();
+            alert('User successfully registered!');
+        } else {
+            const err = await res.json();
+            alert('Error registering user: ' + err.message);
+        }
+    } catch (err) { console.error('Failed to register user', err); }
 }
 
 async function runSmartSearch(query) {

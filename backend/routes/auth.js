@@ -79,6 +79,34 @@ router.post('/register', protect, authorize('admin'), async (req, res) => {
     }
 });
 
+// POST /api/auth/register-citizen — Public registration for citizens
+router.post('/register-citizen', async (req, res) => {
+    const { name, email, password } = req.body;
+    if (!name || !email || !password) {
+        return res.status(400).json({ message: 'Name, email, and password are required.' });
+    }
+    try {
+        const username = email; // For citizens, we'll just use their email as username
+        const exists = await User.findOne({ email: email.toLowerCase() });
+        if (exists) {
+            return res.status(400).json({ message: 'Email already in use.' });
+        }
+        const user = await User.create({
+            name, username, email, password,
+            role: 'citizen',
+            badge: '',
+            rank: 'CIVILIAN',
+        });
+        res.status(201).json({
+            message: 'Citizen account created successfully.',
+            token: generateToken(user._id),
+            user: { id: user._id, name: user.name, role: user.role }
+        });
+    } catch (err) {
+        res.status(400).json({ message: err.message });
+    }
+});
+
 // GET /api/auth/setup — One-time admin seed (only works if NO users exist yet)
 router.get('/setup', async (req, res) => {
     try {

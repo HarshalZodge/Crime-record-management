@@ -8,6 +8,42 @@ const Case = require('../models/Case');
 const FIR = require('../models/FIR');
 const Criminal = require('../models/Criminal');
 const Evidence = require('../models/Evidence');
+const Complaint = require('../models/Complaint');
+
+// --- COMPLAINTS ROUTES ---
+// Officers/Admins view all complaints
+router.get('/complaints', protect, authorize('admin', 'officer'), async (req, res) => {
+    try {
+        const complaints = await Complaint.find().populate('citizenId', 'name email').sort({ filedAt: -1 });
+        res.json(complaints);
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+});
+
+// Citizens view only their own complaints
+router.get('/complaints/me', protect, authorize('citizen'), async (req, res) => {
+    try {
+        const complaints = await Complaint.find({ citizenId: req.user._id }).sort({ filedAt: -1 });
+        res.json(complaints);
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+});
+
+// Citizens file a new complaint
+router.post('/complaints', protect, authorize('citizen'), async (req, res) => {
+    try {
+        const newComplaint = new Complaint({
+            ...req.body,
+            citizenId: req.user._id
+        });
+        const saved = await newComplaint.save();
+        res.status(201).json(saved);
+    } catch (err) {
+        res.status(400).json({ message: err.message });
+    }
+});
 
 // --- CASE ROUTES ---
 router.get('/cases', protect, async (req, res) => {

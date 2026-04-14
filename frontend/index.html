@@ -655,8 +655,8 @@
     <div class="nav-item" onclick="setNav(this)">
       <span class="icon">👤</span> Victims
     </div>
-    <div class="nav-item" onclick="setNav(this)">
-      <span class="icon">🚔</span> Officers
+    <div class="nav-item" id="nav-officers" data-role-hide="non-admin" onclick="document.getElementById('modal-add-user').classList.add('show')">
+      <span class="icon">🚔</span> User Mgmt
     </div>
     <div class="nav-section">// LEGAL</div>
     <div class="nav-item" onclick="setNav(this)">
@@ -771,7 +771,7 @@
       <div class="panel">
         <div class="panel-header">
           <div class="panel-title">CRIMINAL WATCH</div>
-          <div class="panel-action">+ ADD</div>
+          <div class="panel-action" data-role-hide="viewer" onclick="document.getElementById('modal-add-criminal').classList.add('show')">+ ADD</div>
         </div>
         <div class="watch-list" id="criminals-list"></div>
       </div>
@@ -1028,4 +1028,95 @@
     </div>
   </div>
 </div>
+<!-- Add Criminal Modal -->
+<div class="modal-overlay" id="modal-add-criminal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">REGISTER CRIMINAL</div>
+      <div class="modal-close" onclick="document.getElementById('modal-add-criminal').classList.remove('show')">✕</div>
+    </div>
+    <div class="modal-body">
+      <form id="add-criminal-form">
+        <div class="form-grid">
+          <div class="form-group full">
+              <label class="form-label">// CRIMINAL ID</label>
+              <input class="form-input" id="crimIdIn" type="text" placeholder="SUS-2024-XXX" required>
+          </div>
+          <div class="form-group full">
+              <label class="form-label">// FULL NAME / ALIAS</label>
+              <input class="form-input" id="crimNameIn" type="text" placeholder="John Doe a.k.a VIPER" required>
+          </div>
+          <div class="form-group">
+              <label class="form-label">// STATUS</label>
+              <select class="form-select" id="crimStatusIn" required>
+                <option value="Wanted">Wanted</option>
+                <option value="Arrested">Arrested</option>
+              </select>
+          </div>
+          <div class="form-group full">
+              <label class="form-label">// KNOWN CRIMES</label>
+              <input class="form-input" id="crimCrimesIn" type="text" placeholder="Armed Robbery, Extortion" required>
+          </div>
+        </div>
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="document.getElementById('modal-add-criminal').classList.remove('show')">CANCEL</button>
+      <button class="btn-primary" onclick="document.getElementById('add-criminal-form').requestSubmit()">⊕ ADD CRIMINAL</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add User Modal -->
+<div class="modal-overlay" id="modal-add-user">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">REGISTER NEW PERSONNEL</div>
+      <div class="modal-close" onclick="document.getElementById('modal-add-user').classList.remove('show')">✕</div>
+    </div>
+    <div class="modal-body">
+      <form id="add-user-form">
+        <div class="form-grid">
+          <div class="form-group">
+              <label class="form-label">// FULL NAME</label>
+              <input class="form-input" id="userNameIn" type="text" placeholder="Officer Name" required>
+          </div>
+          <div class="form-group">
+              <label class="form-label">// USERNAME</label>
+              <input class="form-input" id="userUsernameIn" type="text" placeholder="Unique ID" required>
+          </div>
+          <div class="form-group full">
+              <label class="form-label">// GOVERNMENT EMAIL</label>
+              <input class="form-input" id="userEmailIn" type="email" placeholder="name@crms.gov" required>
+          </div>
+          <div class="form-group">
+              <label class="form-label">// TEMPORARY PASSWORD</label>
+              <input class="form-input" id="userPassIn" type="password" placeholder="Min 6 chars" required>
+          </div>
+          <div class="form-group">
+              <label class="form-label">// SYSTEM ROLE</label>
+              <select class="form-select" id="userRoleIn" required>
+                <option value="officer">◈ OFFICER (READ+WRITE)</option>
+                <option value="viewer">◌ VIEWER (READ ONLY)</option>
+                <option value="admin">● ADMIN (FULL ACCESS)</option>
+              </select>
+          </div>
+          <div class="form-group">
+              <label class="form-label">// RANK / TITLE</label>
+              <input class="form-input" id="userRankIn" type="text" placeholder="INSPECTOR" required>
+          </div>
+          <div class="form-group">
+              <label class="form-label">// BADGE NO.</label>
+              <input class="form-input" id="userBadgeIn" type="text" placeholder="DCP-04">
+          </div>
+        </div>
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="document.getElementById('modal-add-user').classList.remove('show')">CANCEL</button>
+      <button class="btn-primary" onclick="document.getElementById('add-user-form').requestSubmit()">⊕ REGISTER USER</button>
+    </div>
+  </div>
+</div>
+
 <script src="app.js"></script></body></html>
