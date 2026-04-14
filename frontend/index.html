@@ -647,6 +647,9 @@
     <div class="nav-item" onclick="setNav(this)">
       <span class="icon">📋</span> FIR Register
     </div>
+    <div class="nav-item" onclick="setNav(this)">
+      <span class="icon">📨</span> Complaints
+    </div>
     <div class="nav-section">// RECORDS</div>
     <div class="nav-item" onclick="setNav(this)">
       <span class="icon">🔴</span> Criminals
@@ -857,6 +860,26 @@
       </div>
 
     </div>
+
+    <!-- Public Complaints Table -->
+    <div class="panel" id="panel-complaints" style="display:none; margin-top:20px;">
+      <div class="panel-header">
+        <div class="panel-title">PUBLIC COMPLAINTS PORTAL</div>
+      </div>
+      <table class="cases-table">
+        <thead>
+          <tr>
+            <th>CITIZEN</th>
+            <th>SUBJECT</th>
+            <th>DATE</th>
+            <th>LOCATION</th>
+            <th>STATUS</th>
+          </tr>
+        </thead>
+        <tbody id="complaints-tbody"></tbody>
+      </table>
+    </div>
+
   </div>
 </div>
 
@@ -980,6 +1003,9 @@
     } else if (tabName.includes("FIR Register")) {
         if(grid3) { grid3.style.display = 'grid'; grid3.style.gridTemplateColumns = '1fr'; }
         if(firsPanel) firsPanel.style.display = 'block';
+    } else if (tabName.includes("Complaints")) {
+        const p = document.getElementById('panel-complaints');
+        if(p) p.style.display = 'block';
     } else if (tabName.includes("Criminals")) {
         if(grid2) { grid2.style.display = 'grid'; grid2.style.gridTemplateColumns = '1fr'; }
         if(criminalsPanel) criminalsPanel.style.display = 'block';

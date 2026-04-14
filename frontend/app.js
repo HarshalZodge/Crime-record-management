@@ -79,6 +79,7 @@ document.addEventListener('DOMContentLoaded', () => {
     fetchCriminals();
     fetchFIRs();
     fetchEvidence();
+    fetchAllComplaints();
 
     const addCaseForm = document.getElementById('add-case-form');
     if (addCaseForm) {
@@ -241,6 +242,36 @@ async function fetchEvidence() {
             list.appendChild(item);
         });
     } catch (err) { console.error('Failed to fetch evidence', err); }
+}
+
+async function fetchAllComplaints() {
+    try {
+        const res = await fetch(API_BASE + '/api/complaints', { headers: authHeaders() });
+        if (res.status === 401) return; // Silent return, let other functions handle 401
+        if (!res.ok) return;
+        const complaints = await res.json();
+        
+        const tbody = document.getElementById('complaints-tbody');
+        if (!tbody) return;
+        tbody.innerHTML = '';
+        
+        complaints.forEach(c => {
+            let statusPillCls = 'cold', statusPillText = c.status.toUpperCase();
+            if (c.status.includes('Pending')) { statusPillCls = 'critical'; statusPillText = '◌ PENDING'; }
+            if (c.status.includes('Investigation')) { statusPillCls = 'active'; statusPillText = '● IN PROGRESS'; }
+            if (c.status.includes('Resolved') || c.status.includes('FIR')) { statusPillCls = 'low'; statusPillText = '✔ CLOSED'; }
+
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+              <td>${c.citizenId ? c.citizenId.name : 'Unknown User'}</td>
+              <td>${c.subject}</td>
+              <td style="font-family:'Share Tech Mono',monospace;font-size:11px;">${new Date(c.incidentDate).toLocaleDateString()}</td>
+              <td>${c.location}</td>
+              <td><span class="status-pill ${statusPillCls}">${statusPillText}</span></td>
+            `;
+            tbody.appendChild(tr);
+        });
+    } catch (err) { console.error('Failed to fetch complaints', err); }
 }
 
 async function createCase() {
