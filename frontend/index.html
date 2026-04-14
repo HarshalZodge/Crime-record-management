@@ -882,6 +882,59 @@
       </table>
     </div>
 
+    <!-- System Settings Panel -->
+    <div class="panel" id="panel-settings" style="display:none; margin-top:20px;">
+      <div class="panel-header">
+        <div class="panel-title">SYSTEM CONFIGURATION // SETTINGS</div>
+      </div>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; padding-top: 15px;">
+        
+        <!-- Module: Security Settings -->
+        <div style="border:1px solid var(--border2); padding:20px; background:var(--surface2);">
+          <div style="font-family:'Share Tech Mono',monospace; color:var(--cyan); margin-bottom:15px; font-size:14px;">> ACCESS & SECURITY</div>
+          
+          <div style="margin-bottom:15px;">
+            <label style="display:block; font-size:11px; color:var(--text3); margin-bottom:5px;">SESSION TIMEOUT (MINUTES)</label>
+            <input class="form-input" type="number" value="30" style="width:100%;" disabled>
+          </div>
+          
+          <div style="margin-bottom:15px;">
+            <label style="display:block; font-size:11px; color:var(--text3); margin-bottom:5px;">REQUIRE 2FA ON LOGIN</label>
+            <select class="form-select" style="width:100%;" disabled>
+              <option selected>ENABLED</option>
+              <option>DISABLED</option>
+            </select>
+          </div>
+          
+          <button class="btn-primary" style="width:100%; background:var(--bg); border:1px solid var(--border2);" onclick="alert('Network encryption cleared.')">Purge Local Crypto Cache</button>
+        </div>
+
+        <!-- Module: Integrations -->
+        <div style="border:1px solid var(--border2); padding:20px; background:var(--surface2);">
+          <div style="font-family:'Share Tech Mono',monospace; color:var(--gold); margin-bottom:15px; font-size:14px;">> API & INTEGRATIONS</div>
+          
+          <div style="margin-bottom:15px;">
+            <label style="display:block; font-size:11px; color:var(--text3); margin-bottom:5px;">GOOGLE GEMINI ENGINE</label>
+            <div style="display:flex; align-items:center; gap:10px;">
+              <span style="color:var(--green); font-size:24px;">●</span>
+              <span style="font-size:12px; color:var(--white);">ONLINE (v1beta / gemini-3-flash-preview)</span>
+            </div>
+          </div>
+          
+          <div style="margin-bottom:15px;">
+            <label style="display:block; font-size:11px; color:var(--text3); margin-bottom:5px;">MONGODB CLUSTER</label>
+            <div style="display:flex; align-items:center; gap:10px;">
+              <span style="color:var(--green); font-size:24px;">●</span>
+              <span style="font-size:12px; color:var(--white);">SYNCED (Secure Mongoose ODM Connection)</span>
+            </div>
+          </div>
+          
+          <button class="btn-primary" style="width:100%; background:var(--bg); border:1px solid var(--cyan);" onclick="alert('AI synchronization routine manually triggered.')">Force AI Dictionary Sync</button>
+        </div>
+
+      </div>
+    </div>
+
   </div>
 </div>
 
@@ -1017,6 +1070,9 @@
     } else if (tabName.includes("Analytics")) {
         if(grid3) { grid3.style.display = 'grid'; grid3.style.gridTemplateColumns = '1fr'; }
         if(chartPanel) chartPanel.style.display = 'block';    
+    } else if (tabName.includes("Settings")) {
+        const settingsPanel = document.getElementById('panel-settings');
+        if(settingsPanel) settingsPanel.style.display = 'block';    
     } else {
         // Under Construction Fallback
         const unNode = document.createElement('div');
