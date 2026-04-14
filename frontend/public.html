@@ -277,12 +277,19 @@
         body: JSON.stringify({ history: chatHistory, message: text })
       });
       const data = await res.json();
+
+      if (!res.ok) {
+        addMessageToUI('ai', '⚠️ ' + (data.error || data.message || 'System error.'));
+        return;
+      }
+      
+      const aiResponseText = data.reply || data.response || data.text || data.message || 'Error parsing AI response.';
       
       // Update history arrays
       chatHistory.push({ role: 'user', text: text });
-      chatHistory.push({ role: 'model', text: data.reply });
+      chatHistory.push({ role: 'model', text: aiResponseText });
 
-      addMessageToUI('ai', data.reply);
+      addMessageToUI('ai', aiResponseText);
 
       if (data.status === 'COMPLETE') {
         autoFileComplaint(data.extractedData);
