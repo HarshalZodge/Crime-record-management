@@ -1032,6 +1032,8 @@
     const chartPanel = document.querySelector('.crime-chart') ? document.querySelector('.crime-chart').closest('.panel') : null;
     const firsPanel = document.querySelector('.fir-list') ? document.querySelector('.fir-list').closest('.panel') : null;
     const evidencePanel = document.querySelector('.evidence-list') ? document.querySelector('.evidence-list').closest('.panel') : null;
+    const settingsPanel = document.getElementById('panel-settings');
+    const complaintsPanel = document.getElementById('panel-complaints');
     
     // Default Reset Grid layouts
     if(grid2) grid2.style.gridTemplateColumns = '1.6fr 1fr';
@@ -1045,7 +1047,7 @@
     if(statsGrid) statsGrid.style.display = 'none';
     if(grid2) grid2.style.display = 'none';
     if(grid3) grid3.style.display = 'none';
-    [casesPanel, criminalsPanel, chartPanel, firsPanel, evidencePanel].forEach(p => { if(p) p.style.display = 'none'; });
+    [casesPanel, criminalsPanel, chartPanel, firsPanel, evidencePanel, settingsPanel, complaintsPanel].forEach(p => { if(p) p.style.display = 'none'; });
 
     if (tabName.includes("Dashboard")) {
         if(statsGrid) statsGrid.style.display = 'grid';
@@ -1071,7 +1073,6 @@
         if(grid3) { grid3.style.display = 'grid'; grid3.style.gridTemplateColumns = '1fr'; }
         if(chartPanel) chartPanel.style.display = 'block';    
     } else if (tabName.includes("Settings")) {
-        const settingsPanel = document.getElementById('panel-settings');
         if(settingsPanel) settingsPanel.style.display = 'block';    
     } else {
         // Under Construction Fallback
