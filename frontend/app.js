@@ -1,0 +1,241 @@
+// ⚠️  After deploying backend to Render, replace the URL below with your actual Render service URL.
+const API_BASE = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+    ? 'http://localhost:5000'
+    : 'https://REPLACE_WITH_YOUR_RENDER_URL.onrender.com';
+
+document.addEventListener('DOMContentLoaded', () => {
+    fetchStats();
+    fetchCases();
+    fetchCriminals();
+    fetchFIRs();
+    fetchEvidence();
+
+    const addCaseForm = document.getElementById('add-case-form');
+    if (addCaseForm) {
+        addCaseForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            await createCase();
+        });
+    }
+
+    const searchInput = document.getElementById('search-input-box');
+    if (searchInput) {
+        searchInput.addEventListener('keydown', async (e) => {
+            if (e.key === 'Enter' && searchInput.value.trim() !== '') {
+                await runSmartSearch(searchInput.value.trim());
+            }
+        });
+    }
+});
+
+// APIs
+async function fetchStats() {
+    try {
+        const res = await fetch(API_BASE + '/api/stats');
+        const data = await res.json();
+        
+        document.getElementById('stat-active-cases').textContent = data.activeCases || 0;
+        document.getElementById('stat-wanted-criminals').textContent = data.wantedCriminals || 0;
+        document.getElementById('stat-firs-month').textContent = data.firsThisMonth || 0;
+        document.getElementById('stat-solved-rate').textContent = (data.solvedRate || 0) + '%';
+    } catch (err) {
+        console.error('Failed to fetch stats', err);
+    }
+}
+
+async function fetchCases() {
+    try {
+        const res = await fetch(API_BASE + '/api/cases');
+        const cases = await res.json();
+        
+        const tbody = document.getElementById('cases-tbody');
+        tbody.innerHTML = '';
+        
+        cases.forEach(c => {
+            let badgeClass = 'low';
+            if(c.priority === 'Critical') badgeClass = 'critical';
+            else if(c.priority === 'High') badgeClass = 'high';
+            else if(c.priority === 'Medium') badgeClass = 'medium';
+
+            let statusPillCls = 'cold';
+            let statusPillText = '◌ COLD';
+            if(c.status === 'Active') { statusPillCls = 'active'; statusPillText = '● ACTIVE'; }
+            if(c.status === 'Solved') { statusPillCls = 'solved'; statusPillText = '✔ SOLVED'; }
+
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+              <td><span class="case-id">${c.caseId}</span></td>
+              <td>${c.crimeType}</td>
+              <td>${c.officer}</td>
+              <td><span class="priority-badge ${badgeClass}">${c.priority.toUpperCase()}</span></td>
+              <td><span class="status-pill ${statusPillCls}">${statusPillText}</span></td>
+            `;
+            tbody.appendChild(tr);
+        });
+    } catch (err) {
+        console.error('Failed to fetch cases', err);
+    }
+}
+
+async function fetchCriminals() {
+    try {
+        const res = await fetch(API_BASE + '/api/criminals');
+        const criminals = await res.json();
+        
+        const list = document.getElementById('criminals-list');
+        list.innerHTML = '';
+        
+        criminals.forEach(c => {
+            let statusTag = '';
+            let photoWantedCls = '';
+            
+            if (c.status === 'Wanted') {
+                statusTag = `<span class="wanted-tag">WANTED</span>`;
+                photoWantedCls = 'wanted';
+            } else {
+                statusTag = `<span class="arrested-tag">ARRESTED</span>`;
+            }
+
+            const item = document.createElement('div');
+            item.className = 'watch-item';
+            item.innerHTML = `
+              <div class="criminal-photo ${photoWantedCls}">${c.photoIcon || '👤'}</div>
+              <div class="criminal-info">
+                <div class="criminal-name">${c.name}</div>
+                <div class="criminal-meta">ID: ${c.criminalId} • ${c.crimes.toUpperCase()}</div>
+              </div>
+              ${statusTag}
+            `;
+            list.appendChild(item);
+        });
+    } catch (err) {
+        console.error('Failed to fetch criminals', err);
+    }
+}
+
+async function fetchFIRs() {
+    try {
+        const res = await fetch(API_BASE + '/api/firs');
+        const firs = await res.json();
+        
+        const list = document.getElementById('firs-list');
+        list.innerHTML = '';
+        
+        firs.forEach(f => {
+            const item = document.createElement('div');
+            item.className = 'fir-item';
+            item.innerHTML = `
+              <div class="fir-top">
+                <span class="fir-no">${f.firNo}</span>
+                <span class="fir-time">${new Date(f.date).toLocaleDateString()}</span>
+              </div>
+              <div class="fir-desc">${f.description}</div>
+              <div class="fir-location">📍 ${f.location}</div>
+            `;
+            list.appendChild(item);
+        });
+    } catch (err) {
+        console.error('Failed to fetch FIRs', err);
+    }
+}
+
+async function fetchEvidence() {
+    try {
+        const res = await fetch(API_BASE + '/api/evidence');
+        const evidence = await res.json();
+        
+        const list = document.getElementById('evidence-list');
+        list.innerHTML = '';
+        
+        evidence.forEach(ev => {
+            let typeCls = 'digital';
+            if(ev.type === 'Physical') typeCls = 'physical';
+            if(ev.type === 'Forensic') typeCls = 'forensic';
+
+            const item = document.createElement('div');
+            item.className = 'evidence-item';
+            item.innerHTML = `
+              <div class="ev-type-dot ${typeCls}"></div>
+              <div class="ev-info">
+                <div class="ev-title">${ev.title}</div>
+                <div class="ev-meta">CASE: ${ev.caseId} • ${ev.type}</div>
+              </div>
+              <span class="ev-status">${ev.status.toUpperCase()}</span>
+            `;
+            list.appendChild(item);
+        });
+    } catch (err) {
+        console.error('Failed to fetch evidence', err);
+    }
+}
+
+async function createCase() {
+    const data = {
+        caseId: document.getElementById('caseIdIn').value,
+        crimeType: document.getElementById('crimeTypeIn').value,
+        priority: document.getElementById('priorityIn').value,
+        officer: document.getElementById('officerIn').value,
+        status: document.getElementById('statusIn').value,
+        location: document.getElementById('locationIn').value,
+        description: document.getElementById('descriptionIn').value
+    };
+
+    try {
+        const res = await fetch(API_BASE + '/api/cases', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+        
+        if (res.ok) {
+            document.querySelector('.modal-overlay').classList.remove('show');
+            document.getElementById('add-case-form').reset();
+            fetchCases(); // Refresh list
+            fetchStats(); // Refresh stats
+        } else {
+            const err = await res.json();
+            alert('Error adding case: ' + err.message);
+        }
+    } catch (err) {
+        console.error('Failed to create case', err);
+    }
+}
+
+async function runSmartSearch(query) {
+    const modal = document.getElementById('search-modal');
+    const queryText = document.getElementById('search-query-text');
+    const resultsContainer = document.getElementById('search-results-content');
+    
+    queryText.textContent = query;
+    resultsContainer.innerHTML = 'Searching records using Gemini AI... please wait.</br><div style="margin-top:10px; width:20px; height:20px; border:2px solid var(--cyan); border-radius:50%; border-top-color:transparent; animation: spin 1s linear infinite;"></div>';
+    modal.classList.add('show');
+    
+    // Add CSS for spinner if not exists
+    if(!document.getElementById('spin-style')) {
+        const style = document.createElement('style');
+        style.id = 'spin-style';
+        style.innerHTML = '@keyframes spin { 100% { transform: rotate(360deg); } }';
+        document.head.appendChild(style);
+    }
+    
+    try {
+        const res = await fetch(API_BASE + '/api/smart-search', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ query })
+        });
+        
+        const data = await res.json();
+        if (res.ok) {
+            // Apply simple formatting (bold, newlines)
+            let formattedText = data.result
+                .replace(/\\*\\*(.*?)\\*\\*/g, '<strong>$1</strong>')
+                .replace(/\\n/g, '<br/>');
+            resultsContainer.innerHTML = formattedText;
+        } else {
+            resultsContainer.innerHTML = '<span style="color:var(--accent);">Error: ' + data.message + '</span>';
+        }
+    } catch (err) {
+        resultsContainer.innerHTML = '<span style="color:var(--accent);">Search request failed: ' + err.message + '</span>';
+    }
+}
