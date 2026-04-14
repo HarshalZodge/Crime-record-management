@@ -79,4 +79,38 @@ router.post('/register', protect, authorize('admin'), async (req, res) => {
     }
 });
 
+// GET /api/auth/setup — One-time admin seed (only works if NO users exist yet)
+router.get('/setup', async (req, res) => {
+    try {
+        const userCount = await User.countDocuments();
+        if (userCount > 0) {
+            return res.status(403).json({
+                message: 'Setup already completed. This endpoint is now disabled.',
+                users: userCount
+            });
+        }
+
+        await User.create({
+            name:     'System Admin',
+            username: 'admin',
+            email:    'admin@crms.gov',
+            password: 'admin123',
+            role:     'admin',
+            badge:    'ADM-001',
+            rank:     'ADMINISTRATOR',
+        });
+
+        res.json({
+            message: '✅ Admin user created successfully!',
+            credentials: {
+                username: 'admin',
+                password: 'admin123',
+                note: '⚠️ Change your password after first login!'
+            }
+        });
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+});
+
 module.exports = router;
