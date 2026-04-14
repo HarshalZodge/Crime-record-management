@@ -45,6 +45,21 @@ router.post('/complaints', protect, authorize('citizen'), async (req, res) => {
     }
 });
 
+// Officers/Admins update complaint status
+router.put('/complaints/:id/status', protect, authorize('admin', 'officer'), async (req, res) => {
+    try {
+        const { status } = req.body;
+        const complaint = await Complaint.findById(req.params.id);
+        if (!complaint) return res.status(404).json({ message: 'Complaint not found' });
+        
+        complaint.status = status;
+        await complaint.save();
+        res.json({ message: 'Status updated successfully', complaint });
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+});
+
 // --- CASE ROUTES ---
 router.get('/cases', protect, async (req, res) => {
     try {

@@ -74,6 +74,10 @@
         <input type="text" id="c-subject" placeholder="e.g., Stolen Bicycle, Noise Disturbance" required>
       </div>
       <div class="form-group">
+        <label>Contact Number</label>
+        <input type="tel" id="c-contact" placeholder="+1234567890" required>
+      </div>
+      <div class="form-group">
         <label>Date of Incident</label>
         <input type="date" id="c-date" required>
       </div>
@@ -175,6 +179,7 @@
 
     const payload = {
       subject: document.getElementById('c-subject').value,
+      contactNo: document.getElementById('c-contact').value,
       incidentDate: document.getElementById('c-date').value,
       location: document.getElementById('c-location').value,
       description: document.getElementById('c-desc').value

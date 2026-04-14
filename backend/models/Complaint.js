@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 
 const complaintSchema = new mongoose.Schema({
     citizenId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+    contactNo: { type: String, required: true, default: 'Not Provided' },
     subject: { type: String, required: true },
     description: { type: String, required: true },
     location: { type: String, required: true },

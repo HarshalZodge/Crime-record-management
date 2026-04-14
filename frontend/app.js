@@ -264,14 +264,42 @@ async function fetchAllComplaints() {
             const tr = document.createElement('tr');
             tr.innerHTML = `
               <td>${c.citizenId ? c.citizenId.name : 'Unknown User'}</td>
+              <td>${c.contactNo || 'N/A'}</td>
               <td>${c.subject}</td>
               <td style="font-family:'Share Tech Mono',monospace;font-size:11px;">${new Date(c.incidentDate).toLocaleDateString()}</td>
               <td>${c.location}</td>
               <td><span class="status-pill ${statusPillCls}">${statusPillText}</span></td>
+              <td>
+                <select class="form-select" style="padding:4px; font-size:10px; width:auto; border-radius:4px; background:var(--surface2);" onchange="updateComplaintStatus('${c._id}', this.value)">
+                  <option value="" disabled selected>Update...</option>
+                  <option value="Under Investigation">Investigate</option>
+                  <option value="Resolved">Resolve</option>
+                  <option value="Converted to FIR">Convert to FIR</option>
+                  <option value="Rejected">Reject</option>
+                </select>
+              </td>
             `;
             tbody.appendChild(tr);
         });
     } catch (err) { console.error('Failed to fetch complaints', err); }
+}
+
+async function updateComplaintStatus(complaintId, newStatus) {
+    if (!newStatus) return;
+    try {
+        const res = await fetch(API_BASE + '/api/complaints/' + complaintId + '/status', {
+            method: 'PUT',
+            headers: authHeaders(),
+            body: JSON.stringify({ status: newStatus })
+        });
+        if (res.ok) {
+            fetchAllComplaints();
+        } else {
+            alert('Failed to update complaint status.');
+        }
+    } catch (err) {
+        console.error('Update status error', err);
+    }
 }
 
 async function createCase() {
