@@ -1,7 +1,6 @@
-// ⚠️  After deploying backend to Render, replace the URL below with your actual Render service URL.
 const API_BASE = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
     ? 'http://localhost:5000'
-    : 'https://REPLACE_WITH_YOUR_RENDER_URL.onrender.com';
+    : 'https://crime-record-management-80an.onrender.com';
 
 document.addEventListener('DOMContentLoaded', () => {
     fetchStats();
