@@ -197,7 +197,7 @@ router.post('/smart-search', protect, async (req, res) => {
         }
 
         const genAI = new GoogleGenerativeAI(apiKey);
-        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-latest" });
 
         const prompt = `You are a highly intelligent police records analyst AI. 
         You have access to the following partial database dump:
@@ -253,7 +253,7 @@ router.post('/ai/investigator', protect, authorize('citizen'), async (req, res) 
         Once the user has provided all necessary details, set status to "COMPLETE" and fill out the extractedData object fully with the finalized information, and set "reply" to a final thank you message.`;
 
         const model = genAI.getGenerativeModel({ 
-            model: "gemini-1.5-flash",
+            model: "gemini-1.5-flash-latest",
             // We force it to output valid JSON for our frontend to parse
             generationConfig: { responseMimeType: "application/json" },
             systemInstruction: systemPrompt
@@ -305,7 +305,7 @@ router.get('/ai/analyze-complaint/:id', protect, authorize('admin', 'officer'), 
         if (!apiKey) return res.status(500).json({ message: 'Gemini API not configured' });
 
         const genAI = new GoogleGenerativeAI(apiKey);
-        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-latest" });
 
         const prompt = `You are a highly intelligent Police Data Analyst AI.
         A citizen just filed the following complaint:
