@@ -270,18 +270,47 @@ async function fetchAllComplaints() {
               <td>${c.location}</td>
               <td><span class="status-pill ${statusPillCls}">${statusPillText}</span></td>
               <td>
-                <select class="form-select" style="padding:4px; font-size:10px; width:auto; border-radius:4px; background:var(--surface2);" onchange="updateComplaintStatus('${c._id}', this.value)">
-                  <option value="" disabled selected>Update...</option>
-                  <option value="Under Investigation">Investigate</option>
-                  <option value="Resolved">Resolve</option>
-                  <option value="Converted to FIR">Convert to FIR</option>
-                  <option value="Rejected">Reject</option>
-                </select>
+                <div style="display:flex; gap:5px; align-items:center;">
+                  <select class="form-select" style="padding:4px; font-size:10px; width:auto; border-radius:4px; background:var(--surface2);" onchange="updateComplaintStatus('${c._id}', this.value)">
+                    <option value="" disabled selected>Update...</option>
+                    <option value="Under Investigation">Investigate</option>
+                    <option value="Resolved">Resolve</option>
+                    <option value="Converted to FIR">Convert to FIR</option>
+                    <option value="Rejected">Reject</option>
+                  </select>
+                  <button onclick="getAIInsight('${c._id}')" class="btn-primary" style="padding:3px 8px; font-size:10px; border-radius:4px; margin:0;" title="Cross-reference with database">🧠 AI</button>
+                </div>
               </td>
             `;
             tbody.appendChild(tr);
         });
     } catch (err) { console.error('Failed to fetch complaints', err); }
+}
+
+async function getAIInsight(complaintId) {
+    const btn = event.currentTarget;
+    const oldText = btn.innerHTML;
+    btn.innerHTML = '⏳...';
+    btn.disabled = true;
+
+    try {
+        const res = await fetch(API_BASE + '/api/ai/analyze-complaint/' + complaintId, {
+            headers: authHeaders()
+        });
+        const data = await res.json();
+        
+        if (res.ok) {
+            // Use a simple prompt/alert style modal for now
+            alert("🧠 GEMINI INTELLIGENCE REPORT:\n\n" + data.insights);
+        } else {
+            alert("AI Error: " + data.message);
+        }
+    } catch (err) {
+        alert("Failed to connect to AI engine.");
+    }
+    
+    btn.innerHTML = oldText;
+    btn.disabled = false;
 }
 
 async function updateComplaintStatus(complaintId, newStatus) {
