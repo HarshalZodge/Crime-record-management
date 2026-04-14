@@ -679,11 +679,15 @@
   </div>
   <div class="sidebar-footer">
     <div class="officer-card">
-      <div class="officer-avatar">AK</div>
+      <div class="officer-avatar" id="user-avatar">--</div>
       <div class="officer-info">
-        <div class="officer-name">Arjun Kumar</div>
-        <div class="officer-rank">INSPECTOR // DCP-03</div>
+        <div class="officer-name" id="user-name">Loading...</div>
+        <div class="officer-rank" id="user-rank">AUTHENTICATING...</div>
       </div>
+    </div>
+    <div style="margin-top:8px;display:flex;align-items:center;justify-content:space-between;">
+      <span id="user-role-badge" style="font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:2px;"></span>
+      <span onclick="logout()" style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--text3);cursor:pointer;letter-spacing:1px;border:1px solid var(--border);padding:3px 8px;transition:all 0.2s;" onmouseover="this.style.color='var(--accent)';this.style.borderColor='var(--accent)'" onmouseout="this.style.color='var(--text3)';this.style.borderColor='var(--border)'">⎋ LOGOUT</span>
     </div>
   </div>
 </nav>
@@ -709,7 +713,7 @@
     <div class="status-dot"></div>
     <div class="status-label">LIVE</div>
     <div style="color:var(--text3);font-family:'Share Tech Mono',monospace;font-size:10px;" id="clock"></div>
-    <button class="panel-action" onclick="document.querySelector('.modal-overlay').classList.add('show')">+ NEW CASE</button>
+    <button class="panel-action" data-role-hide="viewer" onclick="document.querySelector('.modal-overlay').classList.add('show')">+ NEW CASE</button>
   </div>
 
   <!-- Content -->
@@ -913,9 +917,12 @@
         <textarea class="form-textarea" id="descriptionIn" placeholder="Detailed description of the crime and circumstances..."></textarea>
     </div>
   </div>
-  
-</form>
-</div>
+  </form>
+  </div>
+  <div class="modal-footer">
+    <button class="btn-secondary" onclick="document.querySelector('.modal-overlay').classList.remove('show')">CANCEL</button>
+    <button class="btn-primary" onclick="document.getElementById('add-case-form').requestSubmit()">⊕ REGISTER CASE</button>
+  </div>
     
   </div>
 </div>

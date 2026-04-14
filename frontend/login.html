@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CRMS — Secure Login</title>
+<meta name="description" content="Crime Record Management System — Authorized Personnel Only">
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@400;500;600;700&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #080b10;
+    --surface: #0d1117;
+    --surface2: #111820;
+    --border: #1e2d3d;
+    --border2: #243447;
+    --accent: #e63946;
+    --accent2: #ff6b6b;
+    --cyan: #00d4ff;
+    --cyan2: #0099bb;
+    --gold: #f4a300;
+    --green: #39d353;
+    --text: #c9d1d9;
+    --text2: #8b949e;
+    --text3: #58677a;
+    --white: #f0f6fc;
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Rajdhani', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    position: relative;
+  }
+
+  /* Scanline overlay */
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background: repeating-linear-gradient(
+      0deg, transparent, transparent 2px,
+      rgba(0,0,0,0.07) 2px, rgba(0,0,0,0.07) 4px
+    );
+    pointer-events: none;
+    z-index: 999;
+  }
+
+  /* Animated grid background */
+  .bg-grid {
+    position: fixed; inset: 0;
+    background-image:
+      linear-gradient(rgba(0,212,255,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,212,255,0.03) 1px, transparent 1px);
+    background-size: 50px 50px;
+    animation: gridMove 20s linear infinite;
+    z-index: 0;
+  }
+  @keyframes gridMove {
+    0% { background-position: 0 0; }
+    100% { background-position: 50px 50px; }
+  }
+
+  /* Corner decorations */
+  .corner {
+    position: fixed;
+    width: 80px; height: 80px;
+    z-index: 1;
+  }
+  .corner::before, .corner::after {
+    content: '';
+    position: absolute;
+    background: var(--accent);
+  }
+  .corner::before { width: 2px; height: 40px; }
+  .corner::after  { width: 40px; height: 2px; }
+  .corner.tl { top: 20px; left: 20px; }
+  .corner.tl::before { top: 0; left: 0; }
+  .corner.tl::after  { top: 0; left: 0; }
+  .corner.tr { top: 20px; right: 20px; }
+  .corner.tr::before { top: 0; right: 0; }
+  .corner.tr::after  { top: 0; right: 0; }
+  .corner.bl { bottom: 20px; left: 20px; }
+  .corner.bl::before { bottom: 0; left: 0; }
+  .corner.bl::after  { bottom: 0; left: 0; }
+  .corner.br { bottom: 20px; right: 20px; }
+  .corner.br::before { bottom: 0; right: 0; }
+  .corner.br::after  { bottom: 0; right: 0; }
+
+  /* Glow blobs */
+  .glow-red {
+    position: fixed;
+    width: 400px; height: 400px;
+    background: radial-gradient(circle, rgba(230,57,70,0.08) 0%, transparent 70%);
+    top: -100px; left: -100px;
+    z-index: 0;
+  }
+  .glow-cyan {
+    position: fixed;
+    width: 400px; height: 400px;
+    background: radial-gradient(circle, rgba(0,212,255,0.06) 0%, transparent 70%);
+    bottom: -100px; right: -100px;
+    z-index: 0;
+  }
+
+  /* Login card */
+  .login-wrap {
+    position: relative;
+    z-index: 10;
+    width: 420px;
+    animation: fadeUp 0.6s ease both;
+  }
+  @keyframes fadeUp {
+    from { transform: translateY(24px); opacity: 0; }
+    to   { transform: translateY(0);    opacity: 1; }
+  }
+
+  /* Top badge row */
+  .badge-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+  }
+  .classified-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--accent);
+    color: #fff;
+    font-family: 'Orbitron', monospace;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    padding: 4px 12px;
+    clip-path: polygon(8px 0%, 100% 0%, calc(100% - 8px) 100%, 0% 100%);
+  }
+  .sys-id {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 9px;
+    color: var(--text3);
+    letter-spacing: 2px;
+  }
+
+  .login-card {
+    background: var(--surface);
+    border: 1px solid var(--border2);
+    position: relative;
+    overflow: hidden;
+  }
+  /* Top glow line */
+  .login-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--accent), var(--cyan), var(--accent));
+    background-size: 200% 100%;
+    animation: shimmer 3s linear infinite;
+  }
+  @keyframes shimmer {
+    0%   { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+
+  .card-header {
+    padding: 32px 32px 24px;
+    border-bottom: 1px solid var(--border);
+    text-align: center;
+  }
+  .logo-icon {
+    font-size: 36px;
+    margin-bottom: 14px;
+    display: block;
+    filter: drop-shadow(0 0 12px rgba(230,57,70,0.5));
+  }
+  .card-title {
+    font-family: 'Orbitron', monospace;
+    font-size: 20px;
+    font-weight: 900;
+    color: var(--white);
+    letter-spacing: 3px;
+    margin-bottom: 4px;
+  }
+  .card-sub {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+    color: var(--text3);
+    letter-spacing: 2px;
+  }
+
+  .card-body { padding: 28px 32px 32px; }
+
+  .form-group { margin-bottom: 18px; }
+  .form-label {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 2px;
+    color: var(--text3);
+    display: block;
+    margin-bottom: 8px;
+  }
+  .input-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+  .input-icon {
+    position: absolute;
+    left: 14px;
+    font-size: 14px;
+    color: var(--text3);
+    pointer-events: none;
+  }
+  .form-input {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    color: var(--white);
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 13px;
+    padding: 12px 14px 12px 40px;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    letter-spacing: 1px;
+  }
+  .form-input:focus {
+    border-color: var(--cyan);
+    box-shadow: 0 0 0 1px rgba(0,212,255,0.15), 0 0 12px rgba(0,212,255,0.08);
+  }
+  .form-input::placeholder { color: var(--text3); }
+
+  /* Role hint chips */
+  .role-hints {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 22px;
+    flex-wrap: wrap;
+  }
+  .role-chip {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 1px;
+    padding: 3px 9px;
+    border: 1px solid;
+    cursor: default;
+  }
+  .role-chip.admin  { border-color: rgba(230,57,70,0.4);  color: var(--accent);  background: rgba(230,57,70,0.06); }
+  .role-chip.officer{ border-color: rgba(0,212,255,0.4);  color: var(--cyan);    background: rgba(0,212,255,0.06); }
+  .role-chip.viewer { border-color: rgba(57,211,83,0.4);  color: var(--green);   background: rgba(57,211,83,0.06); }
+
+  .btn-login {
+    width: 100%;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    font-family: 'Orbitron', monospace;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    padding: 14px;
+    cursor: pointer;
+    clip-path: polygon(10px 0%, 100% 0%, calc(100% - 10px) 100%, 0% 100%);
+    transition: all 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+  .btn-login::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.12) 50%, transparent 100%);
+    transform: translateX(-100%);
+    transition: transform 0.4s;
+  }
+  .btn-login:hover::after { transform: translateX(100%); }
+  .btn-login:hover { background: var(--accent2); transform: translateY(-1px); box-shadow: 0 6px 20px rgba(230,57,70,0.3); }
+  .btn-login:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+  /* Error message */
+  .error-msg {
+    display: none;
+    margin-top: 14px;
+    padding: 10px 14px;
+    background: rgba(230,57,70,0.1);
+    border: 1px solid rgba(230,57,70,0.3);
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+    color: var(--accent2);
+    letter-spacing: 0.5px;
+    text-align: center;
+  }
+  .error-msg.show { display: block; animation: shake 0.3s ease; }
+  @keyframes shake {
+    0%,100% { transform: translateX(0); }
+    25%      { transform: translateX(-5px); }
+    75%      { transform: translateX(5px); }
+  }
+
+  /* Loading spinner inside button */
+  .spinner {
+    display: inline-block;
+    width: 14px; height: 14px;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    vertical-align: middle;
+    margin-right: 8px;
+  }
+  @keyframes spin { 100% { transform: rotate(360deg); } }
+
+  /* Footer */
+  .card-footer {
+    padding: 12px 32px 16px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .footer-info {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 9px;
+    color: var(--text3);
+    letter-spacing: 1.5px;
+  }
+  .live-dot {
+    width: 6px; height: 6px;
+    background: var(--green);
+    border-radius: 50%;
+    box-shadow: 0 0 6px var(--green);
+    animation: pulse 2s infinite;
+    display: inline-block;
+    margin-right: 5px;
+  }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: var(--surface); }
+  ::-webkit-scrollbar-thumb { background: var(--border2); }
+</style>
+</head>
+<body>
+
+<div class="bg-grid"></div>
+<div class="glow-red"></div>
+<div class="glow-cyan"></div>
+
+<div class="corner tl"></div>
+<div class="corner tr"></div>
+<div class="corner bl"></div>
+<div class="corner br"></div>
+
+<div class="login-wrap">
+
+  <div class="badge-row">
+    <div class="classified-badge">⚠ CLASSIFIED ACCESS</div>
+    <div class="sys-id">SYS // CRMS-v4.2</div>
+  </div>
+
+  <div class="login-card">
+
+    <div class="card-header">
+      <span class="logo-icon">🛡️</span>
+      <div class="card-title">CRMS</div>
+      <div class="card-sub">// CRIME RECORD MANAGEMENT SYSTEM //</div>
+    </div>
+
+    <div class="card-body">
+
+      <div style="margin-bottom:18px;">
+        <div class="form-label" style="margin-bottom:10px;">// ACCESS LEVELS</div>
+        <div class="role-hints">
+          <span class="role-chip admin">● ADMIN — FULL ACCESS</span>
+          <span class="role-chip officer">◈ OFFICER — READ + WRITE</span>
+          <span class="role-chip viewer">◌ VIEWER — READ ONLY</span>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="login-username">// USERNAME OR EMAIL</label>
+        <div class="input-wrap">
+          <span class="input-icon">👤</span>
+          <input class="form-input" type="text" id="login-username" placeholder="Enter username or email" autocomplete="username">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="login-password">// SECURITY PASSWORD</label>
+        <div class="input-wrap">
+          <span class="input-icon">🔒</span>
+          <input class="form-input" type="password" id="login-password" placeholder="Enter your password" autocomplete="current-password">
+        </div>
+      </div>
+
+      <button class="btn-login" id="login-btn" onclick="doLogin()">
+        AUTHENTICATE &amp; ENTER
+      </button>
+
+      <div class="error-msg" id="login-error"></div>
+
+    </div>
+
+    <div class="card-footer">
+      <span class="footer-info"><span class="live-dot"></span>SECURE CONNECTION ACTIVE</span>
+      <span class="footer-info">AES-256 // JWT AUTH</span>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  const API_BASE = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+    ? 'http://localhost:5000'
+    : 'https://crime-record-management-80an.onrender.com';
+
+  // Redirect to dashboard if already logged in
+  window.addEventListener('DOMContentLoaded', () => {
+    const token = localStorage.getItem('crms_token');
+    if (token) window.location.href = 'index.html';
+
+    // Allow Enter key to submit
+    document.getElementById('login-password').addEventListener('keydown', e => {
+      if (e.key === 'Enter') doLogin();
+    });
+    document.getElementById('login-username').addEventListener('keydown', e => {
+      if (e.key === 'Enter') doLogin();
+    });
+  });
+
+  async function doLogin() {
+    const username = document.getElementById('login-username').value.trim();
+    const password = document.getElementById('login-password').value;
+    const btn      = document.getElementById('login-btn');
+    const errEl    = document.getElementById('login-error');
+
+    errEl.classList.remove('show');
+
+    if (!username || !password) {
+      showError('USERNAME AND PASSWORD ARE REQUIRED.');
+      return;
+    }
+
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span> AUTHENTICATING...';
+
+    try {
+      const res = await fetch(API_BASE + '/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password })
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        localStorage.setItem('crms_token', data.token);
+        localStorage.setItem('crms_user', JSON.stringify(data.user));
+        btn.innerHTML = '✔ ACCESS GRANTED — LOADING...';
+        btn.style.background = 'var(--green)';
+        setTimeout(() => { window.location.href = 'index.html'; }, 700);
+      } else {
+        showError(data.message || 'AUTHENTICATION FAILED. ACCESS DENIED.');
+        btn.disabled = false;
+        btn.innerHTML = 'AUTHENTICATE &amp; ENTER';
+      }
+    } catch (err) {
+      showError('CONNECTION FAILED. CHECK NETWORK AND TRY AGAIN.');
+      btn.disabled = false;
+      btn.innerHTML = 'AUTHENTICATE &amp; ENTER';
+    }
+  }
+
+  function showError(msg) {
+    const el = document.getElementById('login-error');
+    el.textContent = '⚠ ' + msg;
+    el.classList.remove('show');
+    void el.offsetWidth; // trigger reflow for animation
+    el.classList.add('show');
+  }
+</script>
+</body>
+</html>

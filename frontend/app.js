@@ -2,7 +2,78 @@ const API_BASE = (window.location.hostname === 'localhost' || window.location.ho
     ? 'http://localhost:5000'
     : 'https://crime-record-management-80an.onrender.com';
 
+// ─── Auth Helpers ─────────────────────────────────────────────────────────────
+
+function getToken() {
+    return localStorage.getItem('crms_token');
+}
+
+function getUser() {
+    try { return JSON.parse(localStorage.getItem('crms_user')); } catch { return null; }
+}
+
+function authHeaders() {
+    return {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + getToken()
+    };
+}
+
+function handle401() {
+    localStorage.removeItem('crms_token');
+    localStorage.removeItem('crms_user');
+    window.location.href = 'login.html';
+}
+
+// Guard: redirect to login if no token
+(function checkAuth() {
+    if (!getToken()) window.location.href = 'login.html';
+})();
+
+// ─── Role-Based UI ────────────────────────────────────────────────────────────
+
+function applyRoleUI(role) {
+    // Elements hidden from viewers (read-only role)
+    const writeOnlyEls = document.querySelectorAll('[data-role-hide="viewer"]');
+    writeOnlyEls.forEach(el => {
+        if (role === 'viewer') el.style.display = 'none';
+    });
+
+    // Elements visible only to admins
+    const adminOnlyEls = document.querySelectorAll('[data-role-hide="non-admin"]');
+    adminOnlyEls.forEach(el => {
+        if (role !== 'admin') el.style.display = 'none';
+    });
+}
+
+function populateSidebar(user) {
+    if (!user) return;
+    const avatarEl = document.getElementById('user-avatar');
+    const nameEl   = document.getElementById('user-name');
+    const rankEl   = document.getElementById('user-rank');
+    const roleEl   = document.getElementById('user-role-badge');
+
+    const initials = user.name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
+    if (avatarEl) avatarEl.textContent = initials;
+    if (nameEl)   nameEl.textContent   = user.name;
+    if (rankEl)   rankEl.textContent   = (user.rank || 'OFFICER') + (user.badge ? ' // ' + user.badge : '');
+
+    if (roleEl) {
+        const colors = { admin: '#e63946', officer: '#00d4ff', viewer: '#39d353' };
+        roleEl.textContent = user.role.toUpperCase();
+        roleEl.style.color = colors[user.role] || '#8b949e';
+    }
+}
+
+// ─── Init ─────────────────────────────────────────────────────────────────────
+
 document.addEventListener('DOMContentLoaded', () => {
+    const user = getUser();
+    if (!user) { handle401(); return; }
+
+    populateSidebar(user);
+    applyRoleUI(user.role);
+
     fetchStats();
     fetchCases();
     fetchCriminals();
@@ -27,39 +98,42 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-// APIs
+function logout() {
+    localStorage.removeItem('crms_token');
+    localStorage.removeItem('crms_user');
+    window.location.href = 'login.html';
+}
+
+// ─── API Calls ────────────────────────────────────────────────────────────────
+
 async function fetchStats() {
     try {
-        const res = await fetch(API_BASE + '/api/stats');
+        const res = await fetch(API_BASE + '/api/stats', { headers: authHeaders() });
+        if (res.status === 401) { handle401(); return; }
         const data = await res.json();
-        
-        document.getElementById('stat-active-cases').textContent = data.activeCases || 0;
+        document.getElementById('stat-active-cases').textContent    = data.activeCases    || 0;
         document.getElementById('stat-wanted-criminals').textContent = data.wantedCriminals || 0;
-        document.getElementById('stat-firs-month').textContent = data.firsThisMonth || 0;
-        document.getElementById('stat-solved-rate').textContent = (data.solvedRate || 0) + '%';
-    } catch (err) {
-        console.error('Failed to fetch stats', err);
-    }
+        document.getElementById('stat-firs-month').textContent       = data.firsThisMonth  || 0;
+        document.getElementById('stat-solved-rate').textContent      = (data.solvedRate    || 0) + '%';
+    } catch (err) { console.error('Failed to fetch stats', err); }
 }
 
 async function fetchCases() {
     try {
-        const res = await fetch(API_BASE + '/api/cases');
+        const res = await fetch(API_BASE + '/api/cases', { headers: authHeaders() });
+        if (res.status === 401) { handle401(); return; }
         const cases = await res.json();
-        
         const tbody = document.getElementById('cases-tbody');
         tbody.innerHTML = '';
-        
         cases.forEach(c => {
             let badgeClass = 'low';
-            if(c.priority === 'Critical') badgeClass = 'critical';
-            else if(c.priority === 'High') badgeClass = 'high';
-            else if(c.priority === 'Medium') badgeClass = 'medium';
+            if (c.priority === 'Critical') badgeClass = 'critical';
+            else if (c.priority === 'High') badgeClass = 'high';
+            else if (c.priority === 'Medium') badgeClass = 'medium';
 
-            let statusPillCls = 'cold';
-            let statusPillText = '◌ COLD';
-            if(c.status === 'Active') { statusPillCls = 'active'; statusPillText = '● ACTIVE'; }
-            if(c.status === 'Solved') { statusPillCls = 'solved'; statusPillText = '✔ SOLVED'; }
+            let statusPillCls = 'cold', statusPillText = '◌ COLD';
+            if (c.status === 'Active') { statusPillCls = 'active'; statusPillText = '● ACTIVE'; }
+            if (c.status === 'Solved') { statusPillCls = 'solved'; statusPillText = '✔ SOLVED'; }
 
             const tr = document.createElement('tr');
             tr.innerHTML = `
@@ -71,30 +145,24 @@ async function fetchCases() {
             `;
             tbody.appendChild(tr);
         });
-    } catch (err) {
-        console.error('Failed to fetch cases', err);
-    }
+    } catch (err) { console.error('Failed to fetch cases', err); }
 }
 
 async function fetchCriminals() {
     try {
-        const res = await fetch(API_BASE + '/api/criminals');
+        const res = await fetch(API_BASE + '/api/criminals', { headers: authHeaders() });
+        if (res.status === 401) { handle401(); return; }
         const criminals = await res.json();
-        
         const list = document.getElementById('criminals-list');
         list.innerHTML = '';
-        
         criminals.forEach(c => {
-            let statusTag = '';
-            let photoWantedCls = '';
-            
+            let statusTag = '', photoWantedCls = '';
             if (c.status === 'Wanted') {
                 statusTag = `<span class="wanted-tag">WANTED</span>`;
                 photoWantedCls = 'wanted';
             } else {
                 statusTag = `<span class="arrested-tag">ARRESTED</span>`;
             }
-
             const item = document.createElement('div');
             item.className = 'watch-item';
             item.innerHTML = `
@@ -107,19 +175,16 @@ async function fetchCriminals() {
             `;
             list.appendChild(item);
         });
-    } catch (err) {
-        console.error('Failed to fetch criminals', err);
-    }
+    } catch (err) { console.error('Failed to fetch criminals', err); }
 }
 
 async function fetchFIRs() {
     try {
-        const res = await fetch(API_BASE + '/api/firs');
+        const res = await fetch(API_BASE + '/api/firs', { headers: authHeaders() });
+        if (res.status === 401) { handle401(); return; }
         const firs = await res.json();
-        
         const list = document.getElementById('firs-list');
         list.innerHTML = '';
-        
         firs.forEach(f => {
             const item = document.createElement('div');
             item.className = 'fir-item';
@@ -133,24 +198,20 @@ async function fetchFIRs() {
             `;
             list.appendChild(item);
         });
-    } catch (err) {
-        console.error('Failed to fetch FIRs', err);
-    }
+    } catch (err) { console.error('Failed to fetch FIRs', err); }
 }
 
 async function fetchEvidence() {
     try {
-        const res = await fetch(API_BASE + '/api/evidence');
+        const res = await fetch(API_BASE + '/api/evidence', { headers: authHeaders() });
+        if (res.status === 401) { handle401(); return; }
         const evidence = await res.json();
-        
         const list = document.getElementById('evidence-list');
         list.innerHTML = '';
-        
         evidence.forEach(ev => {
             let typeCls = 'digital';
-            if(ev.type === 'Physical') typeCls = 'physical';
-            if(ev.type === 'Forensic') typeCls = 'forensic';
-
+            if (ev.type === 'Physical') typeCls = 'physical';
+            if (ev.type === 'Forensic') typeCls = 'forensic';
             const item = document.createElement('div');
             item.className = 'evidence-item';
             item.innerHTML = `
@@ -163,73 +224,66 @@ async function fetchEvidence() {
             `;
             list.appendChild(item);
         });
-    } catch (err) {
-        console.error('Failed to fetch evidence', err);
-    }
+    } catch (err) { console.error('Failed to fetch evidence', err); }
 }
 
 async function createCase() {
     const data = {
-        caseId: document.getElementById('caseIdIn').value,
-        crimeType: document.getElementById('crimeTypeIn').value,
-        priority: document.getElementById('priorityIn').value,
-        officer: document.getElementById('officerIn').value,
-        status: document.getElementById('statusIn').value,
-        location: document.getElementById('locationIn').value,
+        caseId:      document.getElementById('caseIdIn').value,
+        crimeType:   document.getElementById('crimeTypeIn').value,
+        priority:    document.getElementById('priorityIn').value,
+        officer:     document.getElementById('officerIn').value,
+        status:      document.getElementById('statusIn').value,
+        location:    document.getElementById('locationIn').value,
         description: document.getElementById('descriptionIn').value
     };
-
     try {
         const res = await fetch(API_BASE + '/api/cases', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: authHeaders(),
             body: JSON.stringify(data)
         });
-        
+        if (res.status === 401) { handle401(); return; }
         if (res.ok) {
             document.querySelector('.modal-overlay').classList.remove('show');
             document.getElementById('add-case-form').reset();
-            fetchCases(); // Refresh list
-            fetchStats(); // Refresh stats
+            fetchCases();
+            fetchStats();
         } else {
             const err = await res.json();
             alert('Error adding case: ' + err.message);
         }
-    } catch (err) {
-        console.error('Failed to create case', err);
-    }
+    } catch (err) { console.error('Failed to create case', err); }
 }
 
 async function runSmartSearch(query) {
-    const modal = document.getElementById('search-modal');
-    const queryText = document.getElementById('search-query-text');
+    const modal           = document.getElementById('search-modal');
+    const queryText       = document.getElementById('search-query-text');
     const resultsContainer = document.getElementById('search-results-content');
-    
+
     queryText.textContent = query;
-    resultsContainer.innerHTML = 'Searching records using Gemini AI... please wait.</br><div style="margin-top:10px; width:20px; height:20px; border:2px solid var(--cyan); border-radius:50%; border-top-color:transparent; animation: spin 1s linear infinite;"></div>';
+    resultsContainer.innerHTML = 'Searching records using Gemini AI... please wait.<br><div style="margin-top:10px;width:20px;height:20px;border:2px solid var(--cyan);border-radius:50%;border-top-color:transparent;animation:spin 1s linear infinite;"></div>';
     modal.classList.add('show');
-    
-    // Add CSS for spinner if not exists
-    if(!document.getElementById('spin-style')) {
+
+    if (!document.getElementById('spin-style')) {
         const style = document.createElement('style');
         style.id = 'spin-style';
         style.innerHTML = '@keyframes spin { 100% { transform: rotate(360deg); } }';
         document.head.appendChild(style);
     }
-    
+
     try {
         const res = await fetch(API_BASE + '/api/smart-search', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: authHeaders(),
             body: JSON.stringify({ query })
         });
-        
+        if (res.status === 401) { handle401(); return; }
         const data = await res.json();
         if (res.ok) {
-            // Apply simple formatting (bold, newlines)
             let formattedText = data.result
-                .replace(/\\*\\*(.*?)\\*\\*/g, '<strong>$1</strong>')
-                .replace(/\\n/g, '<br/>');
+                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                .replace(/\n/g, '<br/>');
             resultsContainer.innerHTML = formattedText;
         } else {
             resultsContainer.innerHTML = '<span style="color:var(--accent);">Error: ' + data.message + '</span>';

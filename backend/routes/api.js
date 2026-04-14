@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { GoogleGenerativeAI } = require('@google/generative-ai');
+const { protect, authorize } = require('../middleware/auth');
 
 // Import Models
 const Case = require('../models/Case');
@@ -9,7 +10,7 @@ const Criminal = require('../models/Criminal');
 const Evidence = require('../models/Evidence');
 
 // --- CASE ROUTES ---
-router.get('/cases', async (req, res) => {
+router.get('/cases', protect, async (req, res) => {
     try {
         const cases = await Case.find().sort({ date: -1 });
         res.json(cases);
@@ -18,7 +19,7 @@ router.get('/cases', async (req, res) => {
     }
 });
 
-router.post('/cases', async (req, res) => {
+router.post('/cases', protect, authorize('admin', 'officer'), async (req, res) => {
     const newCase = new Case(req.body);
     try {
         const savedCase = await newCase.save();
@@ -29,7 +30,7 @@ router.post('/cases', async (req, res) => {
 });
 
 // --- FIR ROUTES ---
-router.get('/firs', async (req, res) => {
+router.get('/firs', protect, async (req, res) => {
     try {
         const firs = await FIR.find().sort({ date: -1 });
         res.json(firs);
@@ -38,7 +39,7 @@ router.get('/firs', async (req, res) => {
     }
 });
 
-router.post('/firs', async (req, res) => {
+router.post('/firs', protect, authorize('admin', 'officer'), async (req, res) => {
     const newFIR = new FIR(req.body);
     try {
         const savedFIR = await newFIR.save();
@@ -49,7 +50,7 @@ router.post('/firs', async (req, res) => {
 });
 
 // --- CRIMINAL ROUTES ---
-router.get('/criminals', async (req, res) => {
+router.get('/criminals', protect, async (req, res) => {
     try {
         const criminals = await Criminal.find();
         res.json(criminals);
@@ -58,7 +59,7 @@ router.get('/criminals', async (req, res) => {
     }
 });
 
-router.post('/criminals', async (req, res) => {
+router.post('/criminals', protect, authorize('admin', 'officer'), async (req, res) => {
     const newCriminal = new Criminal(req.body);
     try {
         const savedCriminal = await newCriminal.save();
@@ -69,7 +70,7 @@ router.post('/criminals', async (req, res) => {
 });
 
 // --- EVIDENCE ROUTES ---
-router.get('/evidence', async (req, res) => {
+router.get('/evidence', protect, async (req, res) => {
     try {
         const evidence = await Evidence.find();
         res.json(evidence);
@@ -78,7 +79,7 @@ router.get('/evidence', async (req, res) => {
     }
 });
 
-router.post('/evidence', async (req, res) => {
+router.post('/evidence', protect, authorize('admin', 'officer'), async (req, res) => {
     const newEvidence = new Evidence(req.body);
     try {
         const savedEvidence = await newEvidence.save();
@@ -89,7 +90,7 @@ router.post('/evidence', async (req, res) => {
 });
 
 // --- STATS ROUTE ---
-router.get('/stats', async (req, res) => {
+router.get('/stats', protect, async (req, res) => {
     try {
         const activeCases = await Case.countDocuments({ status: 'Active' });
         const solvedCases = await Case.countDocuments({ status: 'Solved' });
@@ -116,7 +117,7 @@ router.get('/stats', async (req, res) => {
 });
 
 // --- GEMINI SMART SEARCH ---
-router.post('/smart-search', async (req, res) => {
+router.post('/smart-search', protect, async (req, res) => {
     const { query } = req.body;
     
     if (!query) {

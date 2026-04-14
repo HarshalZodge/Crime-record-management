@@ -3,6 +3,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const apiRoutes = require('./routes/api');
+const authRoutes = require('./routes/auth');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -23,6 +24,7 @@ const connectDB = async () => {
 
 connectDB();
 
+app.use('/api/auth', authRoutes);
 app.use('/api', apiRoutes);
 
 app.listen(PORT, () => {
