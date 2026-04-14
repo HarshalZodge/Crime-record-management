@@ -882,6 +882,18 @@
       </table>
     </div>
 
+    <!-- Victims Registry Panel -->
+    <div class="panel" id="panel-victims" style="display:none; margin-top:20px;">
+      <div class="panel-header">
+        <div class="panel-title">VICTIM PROTECTION PROGRAM DIRECTORY</div>
+        <div class="panel-action">+ ENROLL VICTIM</div>
+      </div>
+      <div style="border: 1px dashed var(--border2); padding: 50px 20px; text-align:center; background:var(--surface2);">
+        <div style="font-family:Orbitron; font-size:16px; color:var(--text3); margin-bottom:10px;">🛡️ NO ACTIVE PROTECTION PROTOCOLS</div>
+        <div style="font-family:'Share Tech Mono'; font-size:12px; color:var(--text3); letter-spacing:1px;">The secure victim identity vault is currently empty or encrypted.</div>
+      </div>
+    </div>
+
     <!-- System Settings Panel -->
     <div class="panel" id="panel-settings" style="display:none; margin-top:20px;">
       <div class="panel-header">
@@ -1034,6 +1046,7 @@
     const evidencePanel = document.querySelector('.evidence-list') ? document.querySelector('.evidence-list').closest('.panel') : null;
     const settingsPanel = document.getElementById('panel-settings');
     const complaintsPanel = document.getElementById('panel-complaints');
+    const victimsPanel = document.getElementById('panel-victims');
     
     // Default Reset Grid layouts
     if(grid2) grid2.style.gridTemplateColumns = '1.6fr 1fr';
@@ -1047,7 +1060,7 @@
     if(statsGrid) statsGrid.style.display = 'none';
     if(grid2) grid2.style.display = 'none';
     if(grid3) grid3.style.display = 'none';
-    [casesPanel, criminalsPanel, chartPanel, firsPanel, evidencePanel, settingsPanel, complaintsPanel].forEach(p => { if(p) p.style.display = 'none'; });
+    [casesPanel, criminalsPanel, chartPanel, firsPanel, evidencePanel, settingsPanel, complaintsPanel, victimsPanel].forEach(p => { if(p) p.style.display = 'none'; });
 
     if (tabName.includes("Dashboard")) {
         if(statsGrid) statsGrid.style.display = 'grid';
@@ -1061,14 +1074,15 @@
         if(grid3) { grid3.style.display = 'grid'; grid3.style.gridTemplateColumns = '1fr'; }
         if(firsPanel) firsPanel.style.display = 'block';
     } else if (tabName.includes("Complaints")) {
-        const p = document.getElementById('panel-complaints');
-        if(p) p.style.display = 'block';
+        if(complaintsPanel) complaintsPanel.style.display = 'block';
     } else if (tabName.includes("Criminals")) {
         if(grid2) { grid2.style.display = 'grid'; grid2.style.gridTemplateColumns = '1fr'; }
         if(criminalsPanel) criminalsPanel.style.display = 'block';
     } else if (tabName.includes("Evidence")) {
         if(grid3) { grid3.style.display = 'grid'; grid3.style.gridTemplateColumns = '1fr'; }
         if(evidencePanel) evidencePanel.style.display = 'block';
+    } else if (tabName.includes("Victims")) {
+        if(victimsPanel) victimsPanel.style.display = 'block';
     } else if (tabName.includes("Analytics")) {
         if(grid3) { grid3.style.display = 'grid'; grid3.style.gridTemplateColumns = '1fr'; }
         if(chartPanel) chartPanel.style.display = 'block';    
