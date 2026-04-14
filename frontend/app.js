@@ -271,6 +271,7 @@ async function fetchAllComplaints() {
               <td><span class="status-pill ${statusPillCls}">${statusPillText}</span></td>
               <td>
                 <div style="display:flex; gap:5px; align-items:center;">
+                  <button onclick="alert('📝 COMPLAINT DETAILS:\\n\\n' + decodeURIComponent('${encodeURIComponent(Math.max(0, c.description.length)? c.description : 'No description provided')}'))" class="btn-secondary" style="padding:3px 8px; font-size:10px; border-radius:4px; margin:0; background:var(--surface2); border:1px solid var(--border2); color:var(--text);" title="Read full description">📄 Read</button>
                   <select class="form-select" style="padding:4px; font-size:10px; width:auto; border-radius:4px; background:var(--surface2);" onchange="updateComplaintStatus('${c._id}', this.value)">
                     <option value="" disabled selected>Update...</option>
                     <option value="Under Investigation">Investigate</option>
