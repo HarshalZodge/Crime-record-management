@@ -228,7 +228,7 @@ router.post('/ai/investigator', protect, authorize('citizen'), async (req, res) 
         const apiKey = process.env.GEMINI_API_KEY;
         if (!apiKey) return res.status(500).json({ error: 'Gemini API not configured' });
 
-        const genAI = new GoogleGenerativeAI(apiKey);
+
         const systemPrompt = `You are an intelligent Police Intake AI Assistant for the Citizen Portal.
         Your goal is to converse with the user and gather exactly these 4 pieces of information necessary to file an official police complaint:
         1. subject (A short title for the incident, e.g., "Stolen Bicycle", "Noise Complaint")
