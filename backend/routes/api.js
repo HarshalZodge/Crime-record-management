@@ -230,12 +230,6 @@ router.post('/ai/investigator', protect, authorize('citizen'), async (req, res) 
         if (!apiKey) return res.status(500).json({ error: 'Gemini API not configured' });
 
         const genAI = new GoogleGenerativeAI(apiKey);
-        const model = genAI.getGenerativeModel({ 
-            model: "gemini-1.5-flash",
-            // We force it to output valid JSON for our frontend to parse
-            generationConfig: { responseMimeType: "application/json" }
-        });
-
         const systemPrompt = `You are an intelligent Police Intake AI Assistant for the Citizen Portal.
         Your goal is to converse with the user and gather exactly these 4 pieces of information necessary to file an official police complaint:
         1. subject (A short title for the incident, e.g., "Stolen Bicycle", "Noise Complaint")
@@ -251,12 +245,19 @@ router.post('/ai/investigator', protect, authorize('citizen'), async (req, res) 
         - YOU MUST RESPOND IN PURE JSON FORMAT EXACTLY LIKE THIS:
         {
           "reply": "Your next conversational message to the user.",
-          "status": "INCOMPLETE" or "COMPLETE"
+          "status": "INCOMPLETE",
           "extractedData": { "subject": "", "contactNo": "", "incidentDate": "", "location": "", "description": "" } 
         }
         
         Set status to "INCOMPLETE" and leave extractedData fields blank or partially empty if you don't have all 4 pieces of information confidently.
         Once the user has provided all necessary details, set status to "COMPLETE" and fill out the extractedData object fully with the finalized information, and set "reply" to a final thank you message.`;
+
+        const model = genAI.getGenerativeModel({ 
+            model: "gemini-1.5-flash",
+            // We force it to output valid JSON for our frontend to parse
+            generationConfig: { responseMimeType: "application/json" },
+            systemInstruction: systemPrompt
+        });
 
         // Format history for Gemini chat format
         let chatHistory = [];
@@ -268,8 +269,7 @@ router.post('/ai/investigator', protect, authorize('citizen'), async (req, res) 
         }
 
         const chat = model.startChat({
-            history: chatHistory,
-            systemInstruction: systemPrompt
+            history: chatHistory
         });
 
         const result = await chat.sendMessage(message);
